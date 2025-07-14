@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🎧 AI Call Analyzer</title>
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0f0f0f, #290a59, #1a1a2e);
+      background-size: 300% 300%;
+      animation: bgFade 10s ease infinite;
+      color: #f2f2f2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 30px 20px;
+    }
+
+    @keyframes bgFade {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container {
+      width: 100%;
+      max-width: 620px;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 35px;
+      margin-top: 40px;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(114, 9, 183, 0.4);
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      color: #ffffff;
+      margin-bottom: 10px;
+    }
+
+    .typing {
+      font-size: 1rem;
+      margin-bottom: 20px;
+      color: #cccccc;
+      font-style: italic;
+      animation: typing 4s steps(50, end), blink .8s step-end infinite;
+      white-space: nowrap;
+      overflow: hidden;
+      border-right: 2px solid #fff;
+      max-width: 100%;
+    }
+
+    @keyframes typing {
+      from { width: 0 }
+      to { width: 100% }
+    }
+
+    @keyframes blink {
+      50% { border-color: transparent }
+    }
+
+    input[type="file"] {
+      padding: 12px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid #555;
+      border-radius: 10px;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 12px 25px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(90deg, #7209b7, #f72585);
+      color: white;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background: linear-gradient(90deg, #f72585, #7209b7);
+      transform: scale(1.05);
+    }
+
+    #animation-container {
+      display: none;
+      margin-top: 25px;
+    }
+
+    #responseArea {
+      white-space: pre-wrap;
+      text-align: left;
+      background-color: rgba(255, 255, 255, 0.07);
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 25px;
+      max-height: 400px;
+      overflow-y: auto;
+      font-size: 0.95rem;
+      color: #e6e6e6;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.7rem;
+      }
+      .typing {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>🎧 AI Call Analyzer</h1>
+    <div class="typing">Smart analysis. Smooth experience. Powered by LLaMA. 🧠</div>
+
+    <form id="uploadForm">
+      <input type="file" id="audioFile" accept=".wav" required />
+      <button type="submit">🚀 Analyze Audio</button>
+    </form>
+
+    <!-- Loader -->
+    <div id="animation-container">
+      <lottie-player
+        src="headphones.json"
+        background="transparent"
+        speed="1"
+        style="width: 200px; height: 200px; margin: auto;"
+        loop autoplay>
+      </lottie-player>
+      <p style="color: #ccc;">Analyzing your call... 🎧</p>
+    </div>
+
+    <pre id="responseArea"></pre>
+  </div>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const fileInput = document.getElementById('audioFile');
+    const responseArea = document.getElementById('responseArea');
+    const loader = document.getElementById('animation-container');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      loader.style.display = "block";
+      responseArea.textContent = "";
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/analyze-call", {
+          method: "POST",
+          body: formData
+        });
+
+        const raw = await response.text();
+        loader.style.display = "none";
+
+        try {
+          const data = JSON.parse(raw);
+          responseArea.textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+          responseArea.textContent = "⚠️ Server sent invalid JSON:\n\n" + raw;
+        }
+      } catch (err) {
+        loader.style.display = "none";
+        responseArea.textContent = "❌ Network error: " + err.message;
+      }
+    });
+  </script>
+
+</body>
+</html>
